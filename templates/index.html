@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Student Duty Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📊 Dashboard Overview</h2>
+    <p style="color: #7f8c8d; margin-top: 10px;">Welcome to the Student Duty Management System</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Students</h3>
+        <div class="number">{{ total_students }}</div>
+        <small style="opacity: 0.8;">{{ assigned_students }} assigned to tables</small>
+    </div>
+
+    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        <h3>Total Tables</h3>
+        <div class="number">{{ tables|length }}</div>
+        <small style="opacity: 0.8;">Click "Tables" to manage</small>
+    </div>
+
+    <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+        <h3>Active Duties</h3>
+        <div class="number">{{ total_duties }}</div>
+        <small style="opacity: 0.8;">Meal cleanup tasks</small>
+    </div>
+</div>
+
+{% if tables|length > 0 %}
+<div class="card" style="margin-top: 30px;">
+    <h2>🍽️ Table Occupancy Overview</h2>
+    <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 15px;">
+        <em>Note: Capacity is a suggested target. Tables can have more students if needed.</em>
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th>Table Number</th>
+                <th>Target Capacity</th>
+                <th>Current Students</th>
+                <th>Difference</th>
+                <th>Fill Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for table in tables %}
+            <tr>
+                <td><strong>Table {{ table.table_number }}</strong></td>
+                <td>{{ table.capacity }}</td>
+                <td>{{ table.current_count }}</td>
+                <td>
+                    {% if table.current_count > table.capacity %}
+                        <span style="color: #e67e22;">+{{ table.current_count - table.capacity }} over</span>
+                    {% elif table.current_count < table.capacity %}
+                        <span style="color: #27ae60;">{{ table.capacity - table.current_count }} under</span>
+                    {% else %}
+                        <span style="color: #3498db;">At target</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="width: 100%; background: #ecf0f1; border-radius: 5px; height: 20px; overflow: hidden;">
+                        <div style="width: {{ (table.current_count / table.capacity * 100) if table.capacity > 0 else 0 }}%; 
+                                    background: {% if (table.current_count / table.capacity * 100) > 100 %}#e67e22{% elif (table.current_count / table.capacity * 100) > 90 %}#f39c12{% else %}#27ae60{% endif %}; 
+                                    height: 100%; transition: width 0.3s; max-width: 100%;"></div>
+                    </div>
+                    <small>{{ "%.1f"|format((table.current_count / table.capacity * 100) if table.capacity > 0 else 0) }}%</small>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card" style="margin-top: 30px; text-align: center; padding: 60px; background: #fff3cd; border-left: 4px solid #ffc107;">
+    <h3 style="color: #856404; margin-bottom: 15px;">⚠️ No Tables Created</h3>
+    <p style="color: #856404; margin-bottom: 25px;">Create tables to assign students for meal cleanup duties</p>
+    <a href="{{ url_for('add_table') }}" class="btn btn-primary">➕ Create First Table</a>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top: 30px;">
+    <h2>🚀 Quick Actions</h2>
+    <div style="display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
+        <a href="{{ url_for('add_table') }}" class="btn btn-primary">➕ Add New Table</a>
+        <a href="{{ url_for('upload') }}" class="btn btn-primary">📤 Upload Students</a>
+        <a href="{{ url_for('students') }}" class="btn btn-success">👥 View All Students</a>
+        <a href="{{ url_for('tables') }}" class="btn btn-secondary">🏓 View Tables</a>
+    </div>
+</div>
+{% endblock %}

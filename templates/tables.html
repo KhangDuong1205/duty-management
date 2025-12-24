@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Tables - Student Duty Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h2>🏓 Table Management</h2>
+            <p style="color: #7f8c8d; margin-top: 5px;">
+                {% if table_data|length > 0 %}
+                    {{ table_data|length }} tables | Target capacity: {{ total_capacity }} seats | Assigned: {{ total_assigned }} students
+                {% else %}
+                    No tables created yet
+                {% endif %}
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{{ url_for('add_table') }}" class="btn btn-primary">➕ Add Table</a>
+            {% if table_data|length > 0 %}
+            <a href="{{ url_for('redistribute') }}" class="btn btn-success"
+               onclick="return confirm('Are you sure you want to redistribute all students to tables?')">
+                🔄 Redistribute Students
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if table_data|length > 0 %}
+<div style="margin-top: 20px; padding: 12px; background: #e8f4fd; border-radius: 8px; border-left: 4px solid #3498db;">
+    <small style="color: #2c3e50;">
+        <strong>ℹ️ Note:</strong> Capacity numbers are suggested targets. Tables can have more or fewer students as needed.
+    </small>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 20px;">
+    {% for item in table_data %}
+    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+            <h3 style="font-size: 24px;">Table {{ item.table.table_number }}</h3>
+            <div style="display: flex; gap: 8px;">
+                <a href="{{ url_for('edit_table', id=item.table.id) }}" 
+                   style="background: rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 5px; text-decoration: none; font-size: 14px;">
+                    ✏️ Edit
+                </a>
+                <a href="{{ url_for('delete_table', id=item.table.id) }}" 
+                   onclick="return confirm('Delete Table {{ item.table.table_number }}? Students will be unassigned.')"
+                   style="background: rgba(231, 76, 60, 0.8); color: white; padding: 6px 12px; border-radius: 5px; text-decoration: none; font-size: 14px;">
+                    🗑️
+                </a>
+            </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span><strong>Target:</strong> {{ item.table.capacity }} seats</span>
+                <span><strong>Current:</strong> {{ item.students|length }} students</span>
+            </div>
+            {% set fill_percent = (item.students|length / item.table.capacity * 100) if item.table.capacity > 0 else 0 %}
+            <div style="width: 100%; background: rgba(0,0,0,0.2); border-radius: 5px; height: 8px; overflow: hidden; position: relative;">
+                <div style="width: {{ [fill_percent, 100]|min }}%; 
+                            background: {% if fill_percent > 100 %}#e67e22{% elif fill_percent > 90 %}#f39c12{% else %}#2ecc71{% endif %}; 
+                            height: 100%;"></div>
+                {% if fill_percent > 100 %}
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px);"></div>
+                {% endif %}
+            </div>
+            <small style="margin-top: 5px; display: block;">
+                {% if item.students|length > item.table.capacity %}
+                    {{ item.students|length - item.table.capacity }} over target
+                {% elif item.students|length < item.table.capacity %}
+                    {{ item.table.capacity - item.students|length }} under target
+                {% else %}
+                    At target capacity
+                {% endif %}
+            </small>
+        </div>
+
+        {% if item.students %}
+        <div style="background: white; color: #333; padding: 15px; border-radius: 8px; max-height: 350px; overflow-y: auto;">
+            <strong style="display: block; margin-bottom: 10px; color: #2c3e50;">Students ({{ item.students|length }}):</strong>
+            <ol style="padding-left: 20px; line-height: 2;">
+                {% for student in item.students %}
+                <li style="font-size: 14px; margin-bottom: 8px;">
+                    <strong>{{ student.student_id }}</strong> - {{ student.full_name }}
+                    {% if student.grade %}<span style="color: #7f8c8d;">(Grade {{ student.grade }})</span>{% endif %}
+                    {% if student.gender %}<span style="color: #3498db;">• {{ student.gender }}</span>{% endif %}
+                    {% if student.country %}<br><small style="color: #27ae60;">🌍 {{ student.country }}</small>{% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% else %}
+        <div style="background: rgba(255,255,255,0.2); padding: 30px; border-radius: 8px; text-align: center;">
+            <em>No students assigned</em>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="margin-top: 20px; text-align: center; padding: 60px;">
+    <h3 style="color: #7f8c8d; margin-bottom: 15px;">No tables created yet</h3>
+    <p style="color: #95a5a6; margin-bottom: 25px;">Create tables to organize students for meal cleanup duties</p>
+    <a href="{{ url_for('add_table') }}" class="btn btn-primary">➕ Create Your First Table</a>
+</div>
+{% endif %}
+{% endblock %}

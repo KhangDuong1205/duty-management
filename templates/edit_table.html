@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Table - Student Duty Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>✏️ Edit Table {{ table.table_number }}</h2>
+    <p style="color: #7f8c8d; margin-top: 10px;">Modify table number or suggested capacity</p>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <form method="POST">
+        <div class="form-group">
+            <label for="table_number">Table Number *</label>
+            <input type="number" name="table_number" id="table_number" class="form-control" 
+                   min="1" required value="{{ table.table_number }}">
+            <small style="color: #7f8c8d;">Change table number (students will follow)</small>
+        </div>
+
+        <div class="form-group">
+            <label for="capacity">Suggested Capacity (Number of Seats) *</label>
+            <input type="number" name="capacity" id="capacity" class="form-control" 
+                   min="1" max="50" required value="{{ table.capacity }}">
+            <small style="color: #7f8c8d;">Current students: {{ table.current_count }} (capacity is advisory only)</small>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+            <a href="{{ url_for('tables') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="margin-top: 20px; background: #e8f4fd; border-left: 4px solid #3498db;">
+    <h3 style="color: #2c3e50; margin-bottom: 10px;">ℹ️ Note</h3>
+    <p style="color: #555; line-height: 1.8;">
+        If you change the table number, all students currently assigned to Table {{ table.table_number }} 
+        will be automatically moved to the new table number. Capacity is used as a target for distribution 
+        but can be exceeded when assigning students manually.
+    </p>
+</div>
+{% endblock %}

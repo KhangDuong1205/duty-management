@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Students - Student Duty Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📤 Upload Student List</h2>
+    <p style="color: #7f8c8d; margin-top: 10px;">Import students from an Excel file (.xlsx or .xls)</p>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3 style="margin-bottom: 20px;">Excel File Requirements</h3>
+    <ul style="line-height: 2; color: #555;">
+        <li><strong>Required columns:</strong> Student ID, Full Name</li>
+        <li><strong>Optional columns:</strong> Grade, Gender, Country</li>
+        <li>File format: .xlsx or .xls</li>
+        <li>Students will be automatically distributed across tables using smart algorithm</li>
+        <li>Algorithm balances grade, gender, and country diversity</li>
+        <li>Table capacity is used as a guide - can be exceeded if needed</li>
+    </ul>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">Select Excel File</label>
+            <input type="file" name="file" id="file" class="form-control" accept=".xlsx,.xls" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload and Import</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<div class="card" style="margin-top: 20px; background: #f8f9fa;">
+    <h3 style="margin-bottom: 15px;">📋 Sample Excel Format</h3>
+    <table style="margin-top: 10px;">
+        <thead>
+            <tr>
+                <th>Student ID</th>
+                <th>Full Name</th>
+                <th>Grade</th>
+                <th>Gender</th>
+                <th>Country</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>STU001</td>
+                <td>John Doe</td>
+                <td>10</td>
+                <td>Male</td>
+                <td>Australia</td>
+            </tr>
+            <tr>
+                <td>STU002</td>
+                <td>Jane Smith</td>
+                <td>11</td>
+                <td>Female</td>
+                <td>Vietnam</td>
+            </tr>
+            <tr>
+                <td>STU003</td>
+                <td>Mike Johnson</td>
+                <td>9</td>
+                <td>Male</td>
+                <td>China</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top: 20px; background: #e8f4fd; border-left: 4px solid #3498db;">
+    <h3 style="color: #2c3e50; margin-bottom: 15px;">🧠 Smart Distribution Algorithm</h3>
+    <p style="color: #555; line-height: 1.8;">
+        The system uses an advanced algorithm that considers multiple factors:
+    </p>
+    <ul style="line-height: 2; color: #555; padding-left: 20px; margin-top: 10px;">
+        <li><strong>Grade Balance:</strong> Distributes students across different grades evenly</li>
+        <li><strong>Gender Diversity:</strong> Ensures mixed gender representation at each table</li>
+        <li><strong>Country Diversity:</strong> Maximizes international mix for cultural exchange</li>
+        <li><strong>Random Element:</strong> Adds controlled randomness for fairness</li>
+        <li><strong>Flexible Capacity:</strong> Uses table capacity as target but can exceed if needed</li>
+    </ul>
+</div>
+{% endblock %}

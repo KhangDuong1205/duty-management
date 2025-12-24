@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Duty Analytics - Student Duty Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📊 Duty Summary Report</h2>
+    <p style="color: #7f8c8d; margin-top: 5px;">Complete duty count for all students in {{ term.name }}</p>
+</div>
+
+<div class="card" style="margin-top: 20px; background: #f8f9fa;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div>
+            <h4 style="color: #7f8c8d; font-size: 14px; margin-bottom: 5px;">TERM</h4>
+            <p style="font-size: 20px; font-weight: bold; color: #2c3e50;">{{ term.name }}</p>
+        </div>
+        <div>
+            <h4 style="color: #7f8c8d; font-size: 14px; margin-bottom: 5px;">DURATION</h4>
+            <p style="font-size: 20px; font-weight: bold; color: #2c3e50;">{{ term.weeks }} weeks</p>
+        </div>
+        <div>
+            <h4 style="color: #7f8c8d; font-size: 14px; margin-bottom: 5px;">DATES</h4>
+            <p style="font-size: 16px; font-weight: bold; color: #2c3e50;">
+                {{ term.start_date.strftime('%b %d') }} - {{ term.end_date.strftime('%b %d, %Y') }}
+            </p>
+        </div>
+        <div>
+            <h4 style="color: #7f8c8d; font-size: 14px; margin-bottom: 5px;">TARGET DUTIES</h4>
+            <p style="font-size: 20px; font-weight: bold; color: #2c3e50;">9-10 per student</p>
+        </div>
+    </div>
+</div>
+
+{% if student_stats %}
+<!-- Summary Statistics -->
+<div class="stats-grid" style="margin-top: 20px;">
+    <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h3>Total Students</h3>
+        <div class="number">{{ student_stats|length }}</div>
+        <small style="opacity: 0.8;">Assigned to tables</small>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
+        <h3>On Track</h3>
+        <div class="number">{{ student_stats|selectattr('status', 'equalto', 'on_track')|list|length }}</div>
+        <small style="opacity: 0.8;">≥ {{ term.weeks - 1 }} duties completed</small>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+        <h3>Under Target</h3>
+        <div class="number">{{ student_stats|selectattr('status', 'equalto', 'under')|list|length }}</div>
+        <small style="opacity: 0.8;">< {{ term.weeks - 1 }} duties completed</small>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+        <h3>Average Duties</h3>
+        <div class="number">
+            {% set total = namespace(count=0) %}
+            {% for stat in student_stats %}
+                {% set total.count = total.count + stat.duty_count %}
+            {% endfor %}
+            {{ "%.1f"|format(total.count / student_stats|length) }}
+        </div>
+        <small style="opacity: 0.8;">Per student</small>
+    </div>
+</div>
+
+<!-- Filter Options -->
+<div class="card" style="margin-top: 20px; background: #e8f4fd;">
+    <h3 style="color: #2c3e50; margin-bottom: 15px;">🔍 Filter Options</h3>
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <button onclick="filterTable('all')" class="btn btn-primary">Show All</button>
+        <button onclick="filterTable('on_track')" class="btn btn-success">On Track Only</button>
+        <button onclick="filterTable('under')" class="btn btn-danger">Under Target Only</button>
+        <button onclick="sortTable('table')" class="btn btn-secondary">Sort by Table</button>
+        <button onclick="sortTable('count')" class="btn btn-secondary">Sort by Duty Count</button>
+        <button onclick="exportToCSV()" class="btn btn-secondary">📥 Export to CSV</button>
+    </div>
+</div>
+
+<!-- Student Duty Count Table -->
+<div style="margin-top: 30px;">
+    <table id="dutyTable">
+        <thead>
+            <tr>
+                <th>Table</th>
+                <th>Student ID</th>
+                <th>Full Name</th>
+                <th>Grade</th>
+                <th style="text-align: center;">Duty Count</th>
+                <th style="text-align: center;">Expected</th>
+                <th style="text-align: center;">Difference</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in student_stats %}
+            <tr data-status="{{ stat.status }}" data-table="{{ stat.student.table_number }}">
+                <td>
+                    <span style="background: #3498db; color: white; padding: 5px 12px; border-radius: 15px; font-size: 14px; font-weight: 600;">
+                        Table {{ stat.student.table_number }}
+                    </span>
+                </td>
+                <td><strong>{{ stat.student.student_id }}</strong></td>
+                <td>{{ stat.student.full_name }}</td>
+                <td style="text-align: center;">{{ stat.student.grade if stat.student.grade else 'N/A' }}</td>
+                <td style="text-align: center;">
+                    <span style="font-size: 24px; font-weight: bold; color: 
+                        {% if stat.duty_count >= stat.expected %}#27ae60
+                        {% elif stat.duty_count >= stat.expected - 2 %}#f39c12
+                        {% else %}#e74c3c{% endif %};">
+                        {{ stat.duty_count }}
+                    </span>
+                </td>
+                <td style="text-align: center; color: #7f8c8d;">{{ stat.expected }}</td>
+                <td style="text-align: center;">
+                    {% set diff = stat.duty_count - stat.expected %}
+                    {% if diff >= 0 %}
+                        <span style="color: #27ae60; font-weight: bold;">+{{ diff }}</span>
+                    {% else %}
+                        <span style="color: #e74c3c; font-weight: bold;">{{ diff }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if stat.status == 'on_track' %}
+                    <span style="background: #d4edda; color: #155724; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">
+                        ✓ On Track
+                    </span>
+                    {% else %}
+                    <span style="background: #fff3cd; color: #856404; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">
+                        ⚠ Under
+                    </span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Summary by Table -->
+<div class="card" style="margin-top: 30px; background: #f8f9fa;">
+    <h3 style="color: #2c3e50; margin-bottom: 20px;">📊 Summary by Table</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        {% set table_summary = {} %}
+        {% for stat in student_stats %}
+            {% set table_num = stat.student.table_number %}
+            {% if table_num not in table_summary %}
+                {% set _ = table_summary.update({table_num: {'students': [], 'total_duties': 0}}) %}
+            {% endif %}
+            {% set _ = table_summary[table_num]['students'].append(stat.student) %}
+            {% set _ = table_summary[table_num].update({'total_duties': table_summary[table_num]['total_duties'] + stat.duty_count}) %}
+        {% endfor %}
+
+        {% for table_num in table_summary.keys()|sort %}
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #3498db;">
+            <h4 style="color: #2c3e50; margin-bottom: 10px;">Table {{ table_num }}</h4>
+            <div style="color: #7f8c8d; font-size: 14px; line-height: 1.8;">
+                <div><strong>Students:</strong> {{ table_summary[table_num]['students']|length }}</div>
+                <div><strong>Total Duties:</strong> {{ table_summary[table_num]['total_duties'] }}</div>
+                <div><strong>Average:</strong> {{ "%.1f"|format(table_summary[table_num]['total_duties'] / table_summary[table_num]['students']|length) }} per student</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card" style="margin-top: 20px; background: #e8f4fd; border-left: 4px solid #3498db;">
+    <h3 style="color: #2c3e50; margin-bottom: 15px;">💡 How Duties Are Calculated</h3>
+    <p style="color: #555; line-height: 1.8; margin-bottom: 15px;">
+        Each week, one table is assigned to cover ALL duties (7 days × 2 shifts = 14 duties per week).
+        Students from that table rotate through the duty slots.
+    </p>
+    <ul style="line-height: 2; color: #555; padding-left: 20px;">
+        <li><strong>Week 1:</strong> Table 1 students cover all 14 duties</li>
+        <li><strong>Week 2:</strong> Table 2 students cover all 14 duties</li>
+        <li><strong>Rotation continues...</strong> until all weeks are covered</li>
+        <li><strong>Expected:</strong> Each student should complete 9-10 duties over {{ term.weeks }} weeks</li>
+    </ul>
+    <p style="color: #555; line-height: 1.8; margin-top: 15px;">
+        <strong>🎯 Target:</strong> If a table has 6 students and gets 1.5 weeks of duty, 
+        that's 21 duties total (14 × 1.5) ÷ 6 students = ~3.5 duties per student per week assigned.
+    </p>
+</div>
+
+<script>
+function filterTable(status) {
+    const rows = document.querySelectorAll('#dutyTable tbody tr');
+    rows.forEach(row => {
+        if (status === 'all') {
+            row.style.display = '';
+        } else {
+            if (row.dataset.status === status) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+}
+
+function sortTable(type) {
+    const tbody = document.querySelector('#dutyTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    rows.sort((a, b) => {
+        if (type === 'table') {
+            const tableA = parseInt(a.dataset.table);
+            const tableB = parseInt(b.dataset.table);
+            return tableA - tableB;
+        } else if (type === 'count') {
+            const countA = parseInt(a.cells[4].textContent.trim());
+            const countB = parseInt(b.cells[4].textContent.trim());
+            return countB - countA; // Descending order
+        }
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+function exportToCSV() {
+    const table = document.getElementById('dutyTable');
+    let csv = [];
+
+    // Headers
+    const headers = [];
+    table.querySelectorAll('thead th').forEach(th => {
+        headers.push(th.textContent.trim());
+    });
+    csv.push(headers.join(','));
+
+    // Rows
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        if (tr.style.display !== 'none') {
+            const row = [];
+            tr.querySelectorAll('td').forEach((td, index) => {
+                let text = td.textContent.trim();
+                // Clean up the text
+                text = text.replace(/\s+/g, ' ');
+                text = text.replace(/"/g, '""'); // Escape quotes
+                row.push('"' + text + '"');
+            });
+            csv.push(row.join(','));
+        }
+    });
+
+    // Download
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'duty_summary_{{ term.name|replace(" ", "_") }}.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+
+{% else %}
+<div class="card" style="margin-top: 20px; text-align: center; padding: 60px;">
+    <h3 style="color: #7f8c8d; margin-bottom: 15px;">No student data available</h3>
+    <p style="color: #95a5a6; margin-bottom: 25px;">Assign students to tables and generate a duty schedule</p>
+    <div style="display: flex; gap: 10px; justify-content: center;">
+        <a href="{{ url_for('students') }}" class="btn btn-primary">Manage Students</a>
+        <a href="{{ url_for('manage_terms') }}" class="btn btn-secondary">Manage Terms</a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

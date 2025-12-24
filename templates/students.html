@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Students - Student Duty Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h2>👥 All Students</h2>
+            <p style="color: #7f8c8d; margin-top: 5px;">Total: {{ students|length }} students</p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{{ url_for('redistribute') }}" class="btn btn-success" 
+               onclick="return confirm('Are you sure you want to redistribute all students to tables?')">
+                🔄 Redistribute Students
+            </a>
+            <a href="{{ url_for('clear_students') }}" class="btn btn-danger"
+               onclick="return confirm('Are you sure you want to clear all students? This cannot be undone!')">
+                🗑️ Clear All Students
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filter and Search Controls -->
+<div class="card" style="margin-top: 20px; background: #f8f9fa;">
+    <h3 style="margin-bottom: 20px; color: #2c3e50;">🔍 Filter & Search</h3>
+    <form method="GET" action="{{ url_for('students') }}">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <!-- Search Box -->
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Search Name/ID</label>
+                <input type="text" name="search" class="form-control" placeholder="Enter name or ID..." 
+                       value="{{ search_query }}">
+            </div>
+
+            <!-- Filter by Table -->
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Filter by Table</label>
+                <select name="table" class="form-control">
+                    <option value="">All Tables</option>
+                    <option value="unassigned" {% if current_table_filter == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                    {% for table in tables %}
+                    <option value="{{ table.table_number }}" {% if current_table_filter == table.table_number|string %}selected{% endif %}>
+                        Table {{ table.table_number }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filter by Grade -->
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Filter by Grade</label>
+                <select name="grade" class="form-control">
+                    <option value="">All Grades</option>
+                    {% for grade in grades %}
+                    <option value="{{ grade }}" {% if current_grade_filter == grade|string %}selected{% endif %}>
+                        Grade {{ grade }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filter by Country -->
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Filter by Country</label>
+                <select name="country" class="form-control">
+                    <option value="">All Countries</option>
+                    {% for country in countries %}
+                    <option value="{{ country }}" {% if current_country_filter == country %}selected{% endif %}>
+                        {{ country }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a href="{{ url_for('students') }}" class="btn btn-secondary">Clear All</a>
+        </div>
+    </form>
+</div>
+
+{% if students %}
+<!-- Sorting Info -->
+<div style="margin-top: 20px; padding: 10px; background: #e8f4fd; border-radius: 8px;">
+    <small style="color: #2c3e50;">
+        <strong>Current Sort:</strong> 
+        {% if current_sort == 'name' %}Name
+        {% elif current_sort == 'grade' %}Grade
+        {% elif current_sort == 'table' %}Table Number
+        {% elif current_sort == 'country' %}Country
+        {% else %}Student ID
+        {% endif %}
+        ({{ 'Descending' if current_order == 'desc' else 'Ascending' }})
+        • Click column headers to sort
+    </small>
+</div>
+
+<table style="margin-top: 0;">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>
+                <a href="?sort=student_id&order={{ 'desc' if current_sort == 'student_id' and current_order == 'asc' else 'asc' }}&table={{ current_table_filter }}&grade={{ current_grade_filter }}&country={{ current_country_filter }}&search={{ search_query }}" 
+                   style="color: white; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                    Student ID
+                    {% if current_sort == 'student_id' %}
+                        <span>{{ '↓' if current_order == 'desc' else '↑' }}</span>
+                    {% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="?sort=name&order={{ 'desc' if current_sort == 'name' and current_order == 'asc' else 'asc' }}&table={{ current_table_filter }}&grade={{ current_grade_filter }}&country={{ current_country_filter }}&search={{ search_query }}" 
+                   style="color: white; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                    Full Name
+                    {% if current_sort == 'name' %}
+                        <span>{{ '↓' if current_order == 'desc' else '↑' }}</span>
+                    {% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="?sort=grade&order={{ 'desc' if current_sort == 'grade' and current_order == 'asc' else 'asc' }}&table={{ current_table_filter }}&grade={{ current_grade_filter }}&country={{ current_country_filter }}&search={{ search_query }}" 
+                   style="color: white; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                    Grade
+                    {% if current_sort == 'grade' %}
+                        <span>{{ '↓' if current_order == 'desc' else '↑' }}</span>
+                    {% endif %}
+                </a>
+            </th>
+            <th>Gender</th>
+            <th>
+                <a href="?sort=country&order={{ 'desc' if current_sort == 'country' and current_order == 'asc' else 'asc' }}&table={{ current_table_filter }}&grade={{ current_grade_filter }}&country={{ current_country_filter }}&search={{ search_query }}" 
+                   style="color: white; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                    Country
+                    {% if current_sort == 'country' %}
+                        <span>{{ '↓' if current_order == 'desc' else '↑' }}</span>
+                    {% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="?sort=table&order={{ 'desc' if current_sort == 'table' and current_order == 'asc' else 'asc' }}&table={{ current_table_filter }}&grade={{ current_grade_filter }}&country={{ current_country_filter }}&search={{ search_query }}" 
+                   style="color: white; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                    Assigned Table
+                    {% if current_sort == 'table' %}
+                        <span>{{ '↓' if current_order == 'desc' else '↑' }}</span>
+                    {% endif %}
+                </a>
+            </th>
+            <th>Change Table</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ student.student_id }}</strong></td>
+            <td>{{ student.full_name }}</td>
+            <td>{{ student.grade if student.grade else 'N/A' }}</td>
+            <td>{{ student.gender if student.gender else 'N/A' }}</td>
+            <td>
+                {% if student.country %}
+                    <span style="background: #e8f4f8; color: #2c3e50; padding: 4px 10px; border-radius: 12px; font-size: 13px;">
+                        {{ student.country }}
+                    </span>
+                {% else %}
+                    <span style="color: #95a5a6;">N/A</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if student.table_number %}
+                    <span style="background: #3498db; color: white; padding: 5px 12px; border-radius: 15px; font-size: 14px;">
+                        Table {{ student.table_number }}
+                    </span>
+                {% else %}
+                    <span style="color: #e74c3c;">Not Assigned</span>
+                {% endif %}
+            </td>
+            <td>
+                <form method="POST" action="{{ url_for('change_student_table', student_id=student.id) }}" style="margin: 0;">
+                    <select name="table_number" class="form-control" style="width: 150px; padding: 6px; font-size: 14px;" 
+                            onchange="if(confirm('Move {{ student.student_id }} to this table?')) this.form.submit();">
+                        <option value="">-- Select --</option>
+                        <option value="0">Unassign</option>
+                        {% for table in tables %}
+                        <option value="{{ table.table_number }}" {% if student.table_number == table.table_number %}selected{% endif %}>
+                            Table {{ table.table_number }} ({{ table.current_count }}/{{ table.capacity }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+    <small style="color: #555;">
+        <strong>💡 Tip:</strong> Use the dropdown in the "Change Table" column to manually move students to different tables. 
+        The system will prevent moving students to full tables.
+    </small>
+</div>
+
+{% else %}
+<div class="card" style="margin-top: 20px; text-align: center; padding: 60px;">
+    <h3 style="color: #7f8c8d; margin-bottom: 15px;">No students found</h3>
+    <p style="color: #95a5a6; margin-bottom: 25px;">
+        {% if search_query or current_table_filter or current_grade_filter or current_country_filter %}
+            No students match your filter criteria. Try adjusting your filters.
+        {% else %}
+            Upload an Excel file to import students
+        {% endif %}
+    </p>
+    <div style="display: flex; gap: 10px; justify-content: center;">
+        <a href="{{ url_for('students') }}" class="btn btn-secondary">Clear Filters</a>
+        <a href="{{ url_for('upload') }}" class="btn btn-primary">📤 Upload Students</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

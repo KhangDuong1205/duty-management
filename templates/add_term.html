@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Add Term - Student Duty Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>➕ Create New Academic Term</h2>
+    <p style="color: #7f8c8d; margin-top: 10px;">Set up a new term for duty scheduling</p>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Term Name *</label>
+            <input type="text" name="name" id="name" class="form-control" 
+                   required placeholder="e.g., Term 1 2025, Spring Semester">
+            <small style="color: #7f8c8d;">A descriptive name for this term</small>
+        </div>
+
+        <div class="form-group">
+            <label for="start_date">Start Date *</label>
+            <input type="date" name="start_date" id="start_date" class="form-control" required>
+            <small style="color: #7f8c8d;">First day of the term (typically a Monday)</small>
+        </div>
+
+        <div class="form-group">
+            <label for="weeks">Number of Weeks *</label>
+            <input type="number" name="weeks" id="weeks" class="form-control" 
+                   min="1" max="20" value="10" required>
+            <small style="color: #7f8c8d;">Typically 10 weeks per term</small>
+        </div>
+
+        <div class="form-group">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" name="is_active" style="margin-right: 10px; width: 20px; height: 20px;">
+                <span>Set as active term</span>
+            </label>
+            <small style="color: #7f8c8d; margin-left: 30px;">Only one term can be active at a time</small>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button type="submit" class="btn btn-primary">➕ Create Term</button>
+            <a href="{{ url_for('manage_terms') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="margin-top: 20px; background: #fff3cd; border-left: 4px solid #ffc107;">
+    <h3 style="color: #856404; margin-bottom: 15px;">⚠️ Important</h3>
+    <ul style="line-height: 2; color: #856404; padding-left: 20px;">
+        <li>Ensure all students are assigned to tables before creating the schedule</li>
+        <li>After creating the term, click "Generate Schedule" to assign duties</li>
+        <li>The schedule will rotate tables weekly (Week 1 = Table 1, Week 2 = Table 2, etc.)</li>
+        <li>End date will be automatically calculated based on start date + weeks</li>
+    </ul>
+</div>
+{% endblock %}

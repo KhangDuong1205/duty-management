@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Terms - Student Duty Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2>📅 Manage Academic Terms</h2>
+            <p style="color: #7f8c8d; margin-top: 5px;">Create and manage duty scheduling terms</p>
+        </div>
+        <a href="{{ url_for('add_term') }}" class="btn btn-primary">➕ Add New Term</a>
+    </div>
+</div>
+
+{% if terms %}
+<div style="margin-top: 20px;">
+    {% for term in terms %}
+    <div class="card" style="background: {% if term.is_active %}linear-gradient(135deg, #667eea 0%, #764ba2 100%){% else %}#f8f9fa{% endif %}; 
+                            color: {% if term.is_active %}white{% else %}#2c3e50{% endif %};">
+        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 300px;">
+                <h3 style="font-size: 24px; margin-bottom: 10px;">
+                    {{ term.name }}
+                    {% if term.is_active %}
+                    <span style="background: rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 15px; font-size: 14px; margin-left: 10px;">
+                        ✓ ACTIVE
+                    </span>
+                    {% endif %}
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                    <div>
+                        <strong>Start Date:</strong> {{ term.start_date.strftime('%B %d, %Y') }}
+                    </div>
+                    <div>
+                        <strong>End Date:</strong> {{ term.end_date.strftime('%B %d, %Y') }}
+                    </div>
+                    <div>
+                        <strong>Duration:</strong> {{ term.weeks }} weeks
+                    </div>
+                    <div>
+                        <strong>Created:</strong> {{ term.created_at.strftime('%Y-%m-%d') }}
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; min-width: 250px;">
+                <a href="{{ url_for('generate_schedule', term_id=term.id) }}" 
+                   class="btn {% if term.is_active %}btn-secondary{% else %}btn-success{% endif %}"
+                   style="font-size: 16px; padding: 15px 25px;"
+                   onclick="return confirm('🔄 Auto-Generate Complete Schedule for {{ term.name }}?\n\nThis will create duty assignments for ALL {{ term.weeks }} weeks.\nTables will rotate weekly (Week 1 = Table 1, Week 2 = Table 2, etc.)\n\nExisting assignments will be overwritten!')">
+                    🔄 Auto-Generate Full Term
+                </a>
+                <div style="display: flex; gap: 10px;">
+                    <a href="{{ url_for('duty_schedule', term=term.id) }}" 
+                       class="btn {% if term.is_active %}btn-secondary{% else %}btn-primary{% endif %}"
+                       style="flex: 1;">
+                        📅 View Schedule
+                    </a>
+                    <a href="{{ url_for('delete_term', id=term.id) }}" 
+                       class="btn btn-danger"
+                       onclick="return confirm('Delete {{ term.name }}? This will remove all duty assignments.')">
+                        🗑️ Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="margin-top: 20px; text-align: center; padding: 60px; background: #fff3cd; border-left: 4px solid #ffc107;">
+    <h3 style="color: #856404; margin-bottom: 15px;">⚠️ No Terms Created</h3>
+    <p style="color: #856404; margin-bottom: 25px;">Create an academic term to start scheduling duties</p>
+    <a href="{{ url_for('add_term') }}" class="btn btn-primary">➕ Create First Term</a>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top: 20px; background: #e8f4fd; border-left: 4px solid #3498db;">
+    <h3 style="color: #2c3e50; margin-bottom: 15px;">🔄 Auto-Generate Feature</h3>
+    <p style="color: #555; line-height: 1.8; margin-bottom: 15px;">
+        The <strong>"Auto-Generate Full Term"</strong> button automatically creates the complete duty schedule for all weeks:
+    </p>
+    <ul style="line-height: 2; color: #555; padding-left: 20px;">
+        <li><strong>Weekly Table Rotation:</strong> Week 1 = Table 1, Week 2 = Table 2, etc.</li>
+        <li><strong>14 Duties per Week:</strong> 7 days × 2 shifts (AM/PM) per week</li>
+        <li><strong>2 Students per Duty:</strong> Pairs of students assigned together</li>
+        <li><strong>Fair Distribution:</strong> Students randomly shuffled within their table</li>
+        <li><strong>Complete Coverage:</strong> All {{ terms[0].weeks if terms else '10' }} weeks scheduled at once</li>
+    </ul>
+    <p style="color: #555; line-height: 1.8; margin-top: 15px;">
+        💡 <strong>Tip:</strong> After auto-generating, you can manually adjust individual duties using drag & drop on the Duty Schedule page.
+    </p>
+</div>
+
+<div class="card" style="margin-top: 20px; background: #fff3cd; border-left: 4px solid #ffc107;">
+    <h3 style="color: #856404; margin-bottom: 15px;">⚠️ Before Auto-Generating</h3>
+    <div style="color: #856404; line-height: 2;">
+        <strong>Checklist:</strong>
+        <ol style="padding-left: 20px; margin-top: 10px;">
+            <li>✓ All students are uploaded and assigned to tables</li>
+            <li>✓ Tables are created with appropriate capacity</li>
+            <li>✓ Term start date and duration are correct</li>
+            <li>✓ You understand existing assignments will be overwritten</li>
+        </ol>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 20px; background: #f8f9fa;">
+    <h3 style="color: #2c3e50; margin-bottom: 15px;">📊 How Terms Work</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div style="background: white; padding: 20px; border-radius: 10px; border-left: 4px solid #3498db;">
+            <h4 style="color: #2c3e50; margin-bottom: 10px;">1️⃣ Create Term</h4>
+            <p style="color: #7f8c8d; font-size: 14px;">Set name, start date, and number of weeks (typically 10)</p>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 10px; border-left: 4px solid #27ae60;">
+            <h4 style="color: #2c3e50; margin-bottom: 10px;">2️⃣ Auto-Generate</h4>
+            <p style="color: #7f8c8d; font-size: 14px;">Click button to create complete schedule for all weeks</p>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 10px; border-left: 4px solid #f39c12;">
+            <h4 style="color: #2c3e50; margin-bottom: 10px;">3️⃣ Fine-Tune</h4>
+            <p style="color: #7f8c8d; font-size: 14px;">Use drag & drop to adjust specific duty assignments</p>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 10px; border-left: 4px solid #9b59b6;">
+            <h4 style="color: #2c3e50; margin-bottom: 10px;">4️⃣ Monitor</h4>
+            <p style="color: #7f8c8d; font-size: 14px;">Check Analytics to track duty counts per student</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

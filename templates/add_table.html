@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Add Table - Student Duty Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>➕ Add New Table</h2>
+    <p style="color: #7f8c8d; margin-top: 10px;">Create a new table with suggested capacity</p>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <form method="POST">
+        <div class="form-group">
+            <label for="table_number">Table Number *</label>
+            <input type="number" name="table_number" id="table_number" class="form-control" 
+                   min="1" required placeholder="e.g., 1, 2, 3...">
+            <small style="color: #7f8c8d;">Enter a unique table number</small>
+        </div>
+
+        <div class="form-group">
+            <label for="capacity">Suggested Capacity (Number of Seats) *</label>
+            <input type="number" name="capacity" id="capacity" class="form-control" 
+                   min="1" max="50" required placeholder="e.g., 6">
+            <small style="color: #7f8c8d;">Target number of students (can be exceeded if needed)</small>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button type="submit" class="btn btn-primary">➕ Add Table</button>
+            <a href="{{ url_for('tables') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="margin-top: 20px; background: #e8f4fd; border-left: 4px solid #3498db;">
+    <h3 style="color: #2c3e50; margin-bottom: 15px;">💡 Tips</h3>
+    <ul style="line-height: 2; color: #555; padding-left: 20px;">
+        <li>Table numbers should be unique</li>
+        <li>Capacity is a suggested target, not a hard limit</li>
+        <li>Tables can have more or fewer students than capacity</li>
+        <li>After creating tables, upload students or redistribute existing ones</li>
+        <li>Students will be distributed proportionally based on table capacity</li>
+    </ul>
+</div>
+{% endblock %}
